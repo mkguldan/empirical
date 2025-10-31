@@ -1,0 +1,44 @@
+# Data files - do not upload to GitHub
+*.csv
+*.xlsx
+*.xls
+
+# Compressed data files
+*.zip
+*.tar.gz
+
+# HTML analysis files (can be large)
+*.html
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
