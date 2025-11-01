@@ -36,6 +36,8 @@ Raw Data Files (CSV)
 4. clean_founder_vc_final.py → founder_vc_cleaned.csv
     ↓
 5. categorize_and_format.py → founder_vc_final_formatted.csv
+    ↓
+6. prepare_for_stata.py → deal_level_analysis.csv/.dta (Stata-ready)
 ```
 
 ### Core Scripts
@@ -114,6 +116,55 @@ Raw Data Files (CSV)
   - Converts `Deal_DealSize` from millions to full USD amounts
   - Format: `$XX,XXX,XXX.XX`
 - **Output**: Analysis-ready dataset with standardized categories
+
+---
+
+#### 6. **Stata Preparation & Deal-Level Aggregation**
+
+**`prepare_for_stata.py`**
+- **Purpose**: Transforms founder-level data into deal-level analysis file ready for Stata regression analysis
+- **Key Transformations**:
+  - **Geography**: Filters to US companies only (50 states + DC)
+  - **Date Filtering**: Excludes deals with missing Deal_Year (ensures temporal controls)
+  - **Amount Parsing**: Converts deal sizes to numeric, creates log transformations
+  - **Collapse to Deal-Level**: Aggregates multiple founders per deal into team composition variables
+- **Team Composition Variables Created**:
+  - **University Pedigree** (multiple approaches):
+    - `Share_Ivy`, `Share_Top8`, `Share_Other` (continuous 0-1)
+    - `Any_Ivy`, `Any_Top8` (binary indicators)
+    - `Team_Education_Group` (categorical: Ivy/Top8/Other, mutually exclusive hierarchy)
+    - `Max_Pedigree` (numeric ranking: 3=Ivy, 2=Top8, 1=Other)
+  - **Gender Composition**:
+    - `Female_Share` (continuous 0-1)
+    - `Any_Female` (binary)
+    - `Team_Gender` (5 categories: Single_Male, Single_Female, All_Male, All_Female, Mixed)
+  - **Major/Field Composition**: Maps 1,918 unique majors → 8 broad categories
+    - CS_Engineering, Natural_Sciences, Medicine_Health, Business_Econ, Social_Sciences, Humanities_Arts, Law, Other
+    - Creates `Team_STEM_Share`, `Team_Business_Share`, `Any_CS`
+  - **Education Level**: `Max_Education` (highest degree on team: PhD > MD > JD > MBA > MSC > BSC)
+  - **Team Metrics**: TeamSize, SyndicateSize (investor count)
+- **Fixed Effects Identifiers**:
+  - `Deal_Year` (for year FE)
+  - `Company_PrimaryIndustryGroup` (38 categories for industry FE)
+  - `Company_HQState_Province` (US states for geography FE)
+  - `Region` (4 regions: Northeast, South, Midwest, West)
+  - `Company_YearFounded` (for founding cohort FE)
+- **Outcome Variables**:
+  - `log_DealSize` (primary continuous outcome)
+  - Stage indicators: `Stage_Seed`, `Stage_Early`, `Stage_Later`
+  - `Stage_Order` (ordered: 1=Seed, 2=Early, 3=Later)
+- **Company Controls**:
+  - `log_Employees` with `Employees_Missing` indicator
+  - `Age_at_Deal` (years from founding to deal)
+- **Validation**:
+  - Confirms 1:1 CompanyID ↔ DealID mapping
+  - Verifies share variables sum to 1.0
+  - Documents all filtering decisions with retention rates
+- **Output**:
+  - `deal_level_analysis.csv` (7,800-7,900 rows, ~47 columns)
+  - `deal_level_analysis.dta` (Stata format with labels)
+  - `data_preparation_log.md` (comprehensive documentation)
+- **Stata-Ready**: Designed for `reghdfe` with high-dimensional fixed effects and clustered standard errors
 
 ---
 
