@@ -38,6 +38,10 @@ Raw Data Files (CSV)
 5. categorize_and_format.py → founder_vc_final_formatted.csv
     ↓
 6. prepare_for_stata.py → deal_level_analysis.csv/.dta (Stata-ready)
+    ↓
+7. create_single_founder_dataset.py → deal_level_analysis_single_founders.csv/.dta (Single founders only)
+    ↓
+8. create_elite_single_founder_dataset.py → deal_level_analysis_single_founders_elite.csv/.dta (Ivy+Top8 only)
 ```
 
 ### Core Scripts
@@ -165,6 +169,73 @@ Raw Data Files (CSV)
   - `deal_level_analysis.dta` (Stata format with labels)
   - `data_preparation_log.md` (comprehensive documentation)
 - **Stata-Ready**: Designed for `reghdfe` with high-dimensional fixed effects and clustered standard errors
+
+---
+
+#### 7. **Single Founder Dataset Creation**
+
+**`create_single_founder_dataset.py`**
+- **Purpose**: Creates a subset containing only single-founder companies for clean dummy variable regressions
+- **Key Logic**:
+  - Filters for `TeamSize == 1` (solo founders only)
+  - Matches back to original founder-level data to retrieve specific university names
+  - Creates university-specific dummy variables for top schools
+  - Avoids baseline contamination from mixed teams in dummy variable regressions
+- **Why Single Founders?**
+  - **Problem**: In full dataset with dummies (i.e., `i.Team_Education_Group`), the omitted "Other" category includes both pure "Other" teams AND mixed teams
+  - **Solution**: Single founders ensure clean interpretation (Ivy vs. pure Other, no team mixing)
+  - **Trade-off**: Smaller sample (~5,600 vs. ~7,800) but cleaner causal interpretation
+- **New Variables Added**:
+  - `University_Name`: Specific university from original `Education_Institute`
+  - University dummies: `Harvard`, `Stanford`, `MIT`, `Berkeley`, `Penn`, `Yale`, `Columbia`, `Princeton`, `Cornell`, `Brown`, `Dartmouth`
+- **Use Cases**:
+  - Run dummy variable regressions without team composition confounds
+  - Identify which specific universities drive Ivy/Top8 effects
+  - Check for outliers at the university level
+  - Robustness check for main results using share variables
+- **Sample Size**: ~5,589 single founder companies (71.9% of full sample)
+- **Output**:
+  - `deal_level_analysis_single_founders.csv`
+  - `deal_level_analysis_single_founders.dta` (Stata format)
+  - `single_founder_dataset_notes.md` (documentation)
+- **Recommended Usage**: Use full dataset with `Share_Ivy` for main results; use single founder dataset with dummies for robustness/sensitivity
+
+---
+
+#### 8. **Elite-Only Single Founder Dataset**
+
+**`create_elite_single_founder_dataset.py`**
+- **Purpose**: Creates a subset with ONLY Ivy League and Top 8 single founders (excludes all "Other" schools)
+- **Key Logic**:
+  - Starts with single founder dataset (TeamSize = 1)
+  - Filters to keep only `Team_Education_Group` in ['Ivy', 'Top8']
+  - Creates binary `Ivy_vs_Top8` indicator for direct comparison
+- **Why Elite Only?**
+  - **Research Question**: Is the "Ivy premium" vs. all others, or vs. other elite schools?
+  - **Direct Comparison**: Compare Ivy vs. Top8 without "Other" baseline contamination
+  - **Within-Elite Effects**: Test if differences exist within the elite tier
+  - **Network Hypothesis**: If Ivy ≈ Top8, suggests "elite vs. non-elite" effect; if Ivy > Top8, suggests Ivy-specific networks
+- **Sample Composition**:
+  - Ivy League: 645 companies (44.4%)
+  - Top 8: 807 companies (55.6%)
+  - Total: 1,452 elite single founders
+- **Interesting Finding**: In raw means, Top8 slightly edges Ivy ($8.3M vs. $8.1M), suggesting similar fundraising success
+- **New Variables**:
+  - `Ivy_vs_Top8`: Binary indicator (1=Ivy, 0=Top8) for convenient regression
+  - All other variables from single founder dataset retained
+- **Use Cases**:
+  - Test hypothesis: "Ivy premium exists vs. Top8" (within-elite comparison)
+  - Check if results are driven by "elite vs. non-elite" or "Ivy vs. everyone"
+  - Robustness check with clearer baseline (Top8 instead of "Other")
+- **Sample Size**: ~1,452 companies (18.7% of full sample, 26.0% of single founders)
+- **Output**:
+  - `deal_level_analysis_single_founders_elite.csv`
+  - `deal_level_analysis_single_founders_elite.dta` (Stata format)
+  - `elite_single_founder_dataset_notes.md` (documentation)
+- **Three-Dataset Strategy**:
+  - **Full sample** (7,774): Main results with Share_Ivy (all teams, all schools)
+  - **Single founders** (5,589): Robustness without team mixing (all schools)
+  - **Elite only** (1,452): Within-elite comparison (Ivy vs. Top8 directly)
 
 ---
 
@@ -325,6 +396,15 @@ python clean_founder_vc_final.py
 
 # Step 5: Categorize education and format currency
 python categorize_and_format.py
+
+# Step 6: Prepare data for Stata (deal-level aggregation)
+python prepare_for_stata.py
+
+# Step 7 (Optional): Create single founder dataset
+python create_single_founder_dataset.py
+
+# Step 8 (Optional): Create elite-only single founder dataset (Ivy + Top8)
+python create_elite_single_founder_dataset.py
 ```
 
 #### 3. Explore the Data
