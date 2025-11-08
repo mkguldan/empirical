@@ -42,7 +42,7 @@ print(f"Total single founder deals: {len(single_df):,}")
 
 # Show distribution before filtering
 print("\nEducation group distribution (before filtering):")
-print(single_df['Team_Education_Group'].value_counts())
+print(single_df['Education_Group'].value_counts())
 print()
 
 # ============================================================================
@@ -53,17 +53,17 @@ print("Step 2: Filtering for Ivy and Top8 schools only")
 print("-" * 80)
 
 # Keep only Ivy and Top8
-elite_df = single_df[single_df['Team_Education_Group'].isin(['Ivy', 'Top8'])].copy()
+elite_df = single_df[single_df['Education_Group'].isin(['Ivy', 'Top8'])].copy()
 
 print(f"After filtering for elite schools: {len(elite_df):,} deals")
 print(f"Dropped {len(single_df) - len(elite_df):,} deals from 'Other' schools")
 print()
 
 print("Education group distribution (after filtering):")
-print(elite_df['Team_Education_Group'].value_counts())
+print(elite_df['Education_Group'].value_counts())
 print(f"\nPercentage breakdown:")
-print(f"  Ivy: {len(elite_df[elite_df['Team_Education_Group']=='Ivy']):,} ({len(elite_df[elite_df['Team_Education_Group']=='Ivy'])/len(elite_df)*100:.1f}%)")
-print(f"  Top8: {len(elite_df[elite_df['Team_Education_Group']=='Top8']):,} ({len(elite_df[elite_df['Team_Education_Group']=='Top8'])/len(elite_df)*100:.1f}%)")
+print(f"  Ivy: {len(elite_df[elite_df['Education_Group']=='Ivy']):,} ({len(elite_df[elite_df['Education_Group']=='Ivy'])/len(elite_df)*100:.1f}%)")
+print(f"  Top8: {len(elite_df[elite_df['Education_Group']=='Top8']):,} ({len(elite_df[elite_df['Education_Group']=='Top8'])/len(elite_df)*100:.1f}%)")
 print()
 
 # ============================================================================
@@ -74,7 +74,7 @@ print("Step 3: Creating Ivy vs Top8 binary indicator")
 print("-" * 80)
 
 # Create a simple binary: 1 = Ivy, 0 = Top8
-elite_df['Ivy_vs_Top8'] = (elite_df['Team_Education_Group'] == 'Ivy').astype(int)
+elite_df['Ivy_vs_Top8'] = (elite_df['Education_Group'] == 'Ivy').astype(int)
 
 print(f"Created 'Ivy_vs_Top8' variable:")
 print(f"  1 (Ivy): {elite_df['Ivy_vs_Top8'].sum():,}")
@@ -97,7 +97,7 @@ print()
 
 print("Deal Size by Group:")
 for group in ['Ivy', 'Top8']:
-    group_df = elite_df[elite_df['Team_Education_Group'] == group]
+    group_df = elite_df[elite_df['Education_Group'] == group]
     print(f"\n{group}:")
     print(f"  N: {len(group_df):,}")
     print(f"  Mean: ${group_df['Deal_DealSize_num'].mean():,.0f}")
@@ -164,8 +164,8 @@ This dataset contains **ONLY single founder companies from Ivy League and Top 8 
 
 ## Sample Size
 - **Total observations**: {len(elite_df):,}
-- **Ivy League**: {len(elite_df[elite_df['Team_Education_Group']=='Ivy']):,} ({len(elite_df[elite_df['Team_Education_Group']=='Ivy'])/len(elite_df)*100:.1f}%)
-- **Top 8**: {len(elite_df[elite_df['Team_Education_Group']=='Top8']):,} ({len(elite_df[elite_df['Team_Education_Group']=='Top8'])/len(elite_df)*100:.1f}%)
+- **Ivy League**: {len(elite_df[elite_df['Education_Group']=='Ivy']):,} ({len(elite_df[elite_df['Education_Group']=='Ivy'])/len(elite_df)*100:.1f}%)
+- **Top 8**: {len(elite_df[elite_df['Education_Group']=='Top8']):,} ({len(elite_df[elite_df['Education_Group']=='Top8'])/len(elite_df)*100:.1f}%)
 - **Dropped from single founder dataset**: {len(single_df) - len(elite_df):,} (all "Other" schools)
 
 ## Purpose
@@ -174,7 +174,7 @@ This dataset contains **ONLY single founder companies from Ivy League and Top 8 
 
 1. **Direct Elite Comparison**: Compare Ivy vs. Top8 without non-elite baseline
 2. **Within-Elite Effects**: Test if there are differences within the elite tier
-3. **Baseline Clarity**: When using `i.Team_Education_Group` in Stata, baseline (Top8) is clearly defined
+3. **Baseline Clarity**: When using `i.Education_Group` in Stata, baseline (Top8) is clearly defined
 4. **Test Hypothesis**: Is the "Ivy premium" vs. "Other" actually vs. "non-Ivy elite"?
 
 ### Research Questions This Enables
@@ -202,7 +202,7 @@ Binary indicator for easier regression interpretation:
 - **1** = Ivy League founder
 - **0** = Top 8 founder
 
-This is equivalent to `Team_Education_Group == 'Ivy'` but more convenient for dummy regressions.
+This is equivalent to `Education_Group == 'Ivy'` but more convenient for dummy regressions.
 
 ## Sample Characteristics
 
@@ -212,7 +212,7 @@ This is equivalent to `Team_Education_Group == 'Ivy'` but more convenient for du
 - Median: ${elite_df['Deal_DealSize_num'].median():,.0f}
 
 **By Group:**
-{chr(10).join([f"- {group}: Mean ${elite_df[elite_df['Team_Education_Group']==group]['Deal_DealSize_num'].mean():,.0f}, Median ${elite_df[elite_df['Team_Education_Group']==group]['Deal_DealSize_num'].median():,.0f}" for group in ['Ivy', 'Top8']])}
+{chr(10).join([f"- {group}: Mean ${elite_df[elite_df['Education_Group']==group]['Deal_DealSize_num'].mean():,.0f}, Median ${elite_df[elite_df['Education_Group']==group]['Deal_DealSize_num'].median():,.0f}" for group in ['Ivy', 'Top8']])}
 
 ### Top Universities (Elite Only)
 {top_unis.head(10).to_string()}
@@ -229,7 +229,7 @@ This is equivalent to `Team_Education_Group == 'Ivy'` but more convenient for du
 use deal_level_analysis_single_founders_elite.dta, clear
 
 * Basic comparison (Top8 is omitted baseline)
-reghdfe log_DealSize i.Team_Education_Group Female_Share ///
+reghdfe log_DealSize i.Education_Group Female_Share ///
     log_Employees Employees_Missing Age_at_Deal SyndicateSize, ///
     absorb(Deal_Year Company_PrimaryIndustryGroup ///
            Company_HQState_Province Company_YearFounded) ///
@@ -244,7 +244,7 @@ reghdfe log_DealSize Ivy_vs_Top8 Female_Share ///
 ```
 
 **Interpretation**: 
-- Coefficient on `1.Team_Education_Group` (or `Ivy_vs_Top8`) shows Ivy premium **relative to Top8**
+- Coefficient on `1.Education_Group` (or `Ivy_vs_Top8`) shows Ivy premium **relative to Top8**
 - Baseline = Top8 (clearly elite schools)
 - Tests: "Among elite schools, does Ivy matter?"
 
@@ -260,7 +260,7 @@ reghdfe log_DealSize Share_Ivy Share_Top8 TeamSize [controls], absorb(FEs)
 
 * Sample 2: Single founders, all schools (Dummy)
 use deal_level_analysis_single_founders.dta, clear
-reghdfe log_DealSize i.Team_Education_Group [controls], absorb(FEs)
+reghdfe log_DealSize i.Education_Group [controls], absorb(FEs)
 * Interpretation: Ivy vs. Other, Top8 vs. Other (clean dummies)
 
 * Sample 3: Single founders, elite only (Ivy vs Top8)
@@ -310,12 +310,12 @@ reghdfe log_DealSize Harvard Stanford MIT Berkeley Penn Yale Columbia ///
 
 **Table 2: Robustness (Single Founders, All Schools)**
 - Dataset: `deal_level_analysis_single_founders.dta` (5,589 deals)
-- Specification: i.Team_Education_Group (Ivy vs Other, Top8 vs Other)
+- Specification: i.Education_Group (Ivy vs Other, Top8 vs Other)
 - Shows: Solo founder Ivy effect vs. "Other" (no team confound)
 
 **Table 3: Within-Elite Comparison (Single Founders, Elite Only)**
 - Dataset: `deal_level_analysis_single_founders_elite.dta` ({len(elite_df):,} deals)
-- Specification: Ivy_vs_Top8 (or i.Team_Education_Group)
+- Specification: Ivy_vs_Top8 (or i.Education_Group)
 - Shows: Is Ivy different from Top8? (within elite tier)
 
 ### What Each Table Tells You
@@ -377,8 +377,8 @@ print("ELITE SINGLE FOUNDER DATASET CREATION COMPLETE")
 print("="*80)
 print()
 print(f"Created dataset with {len(elite_df):,} elite single founder companies")
-print(f"  - Ivy League: {len(elite_df[elite_df['Team_Education_Group']=='Ivy']):,}")
-print(f"  - Top 8: {len(elite_df[elite_df['Team_Education_Group']=='Top8']):,}")
+print(f"  - Ivy League: {len(elite_df[elite_df['Education_Group']=='Ivy']):,}")
+print(f"  - Top 8: {len(elite_df[elite_df['Education_Group']=='Top8']):,}")
 print()
 print("Files created:")
 print("  1. deal_level_analysis_single_founders_elite.csv")
@@ -390,4 +390,5 @@ print("  - Directly compare Ivy vs. Top8 (within elite tier)")
 print("  - Test if Ivy premium is vs. all others or vs. other elite")
 print("  - Check gender/industry heterogeneity within elite schools")
 print("="*80)
+
 

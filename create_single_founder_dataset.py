@@ -91,10 +91,40 @@ single_with_uni = single_with_uni.rename(columns={
 print()
 
 # ============================================================================
-# STEP 4: Create University-specific indicators for top schools
+# STEP 4: Rename columns and simplify categories (remove "Team" prefix)
 # ============================================================================
 
-print("Step 4: Creating university-specific dummy variables")
+print("Step 4: Renaming columns and simplifying categories")
+print("-" * 80)
+
+# Rename columns to remove "Team" (since all are single founders)
+single_with_uni = single_with_uni.rename(columns={
+    'Team_Education_Group': 'Education_Group',
+    'Team_Gender': 'Gender',
+    'Team_Major_Dominant': 'Major_Dominant',
+    'Team_STEM_Share': 'STEM_Share',
+    'Team_Business_Share': 'Business_Share'
+})
+
+# Simplify Gender categories (remove "Single_" prefix since all are single founders)
+single_with_uni['Gender'] = single_with_uni['Gender'].replace({
+    'Single_Male': 'Male',
+    'Single_Female': 'Female'
+})
+
+print("[OK] Renamed 'Team_Education_Group' to 'Education_Group'")
+print("[OK] Renamed 'Team_Gender' to 'Gender'")
+print("[OK] Renamed 'Team_Major_Dominant' to 'Major_Dominant'")
+print("[OK] Renamed 'Team_STEM_Share' to 'STEM_Share'")
+print("[OK] Renamed 'Team_Business_Share' to 'Business_Share'")
+print("[OK] Simplified Gender categories: 'Single_Male' -> 'Male', 'Single_Female' -> 'Female'")
+print()
+
+# ============================================================================
+# STEP 5: Create University-specific indicators for top schools
+# ============================================================================
+
+print("Step 5: Creating university-specific dummy variables")
 print("-" * 80)
 
 # For convenience in regression, create dummies for specific universities
@@ -161,11 +191,11 @@ print()
 # STEP 5: Summary statistics
 # ============================================================================
 
-print("Step 5: Summary Statistics for Single Founder Dataset")
+print("Step 6: Summary Statistics for Single Founder Dataset")
 print("-" * 80)
 
 print("Education Group Distribution (Single Founders):")
-print(single_with_uni['Team_Education_Group'].value_counts())
+print(single_with_uni['Education_Group'].value_counts())
 print()
 
 print("Deal Size Statistics (Single Founders):")
@@ -182,10 +212,10 @@ for uni, count in top_unis.items():
 print()
 
 # ============================================================================
-# STEP 6: Export files
+# STEP 7: Export files
 # ============================================================================
 
-print("Step 6: Exporting files")
+print("Step 7: Exporting files")
 print("-" * 80)
 
 # CSV export
@@ -206,10 +236,10 @@ except Exception as e:
 print()
 
 # ============================================================================
-# STEP 7: Create documentation
+# STEP 8: Create documentation
 # ============================================================================
 
-print("Step 7: Creating documentation")
+print("Step 8: Creating documentation")
 print("-" * 80)
 
 doc = f"""# Single Founder Dataset Documentation
@@ -245,7 +275,7 @@ This dataset contains only **single founder companies** (TeamSize = 1) from the 
 
 ### Variables That Are Different
 - `TeamSize`: Always = 1 (by construction)
-- `Team_Gender`: Only "Single_Male" or "Single_Female" (no teams)
+- `Gender`: Only "Male" or "Female" (no teams, simplified from "Single_Male"/"Single_Female")
 - All `Share_*` variables: Either 0 or 1 (no mixing since solo founder)
 - `Any_*` variables: Same as `Share_*` for single founders
 
@@ -258,7 +288,7 @@ This dataset contains only **single founder companies** (TeamSize = 1) from the 
 ## Sample Characteristics
 
 ### Education Groups (Single Founders)
-{single_with_uni['Team_Education_Group'].value_counts().to_string()}
+{single_with_uni['Education_Group'].value_counts().to_string()}
 
 ### Deal Size
 - Mean: ${single_with_uni['Deal_DealSize_num'].mean():,.0f}
@@ -275,10 +305,10 @@ This dataset contains only **single founder companies** (TeamSize = 1) from the 
 use deal_level_analysis_single_founders.dta, clear
 
 * Check sample
-tab Team_Education_Group
+tab Education_Group
 
 * Baseline with categorical dummy (omitted category = Other)
-reghdfe log_DealSize i.Team_Education_Group Female_Share ///
+reghdfe log_DealSize i.Education_Group Female_Share ///
     log_Employees Employees_Missing Age_at_Deal SyndicateSize, ///
     absorb(Deal_Year Company_PrimaryIndustryGroup ///
            Company_HQState_Province Company_YearFounded) ///
@@ -319,7 +349,7 @@ drop if abs(z_score) > 3
 ## Why Single Founders Only?
 
 ### The Problem with Teams in Dummy Variable Regression
-When using dummy variables (i.e. `i.Team_Education_Group`):
+When using dummy variables (i.e. `i.Education_Group`):
 - Omitted category (baseline) = "Other" 
 - But in full sample, "Other" includes both:
   - Pure "Other" teams (all founders from Other schools)
@@ -359,14 +389,14 @@ reghdfe log_DealSize Share_Ivy Share_Top8 TeamSize Female_Share ///
 ```stata
 use deal_level_analysis_single_founders.dta, clear
 
-reghdfe log_DealSize i.Team_Education_Group Female_Share ///
+reghdfe log_DealSize i.Education_Group Female_Share ///
     log_Employees Employees_Missing Age_at_Deal SyndicateSize, ///
     absorb(Deal_Year Company_PrimaryIndustryGroup ///
            Company_HQState_Province Company_YearFounded) ///
     vce(cluster CompanyID)
 ```
 - Uses {len(single_with_uni):,} observations
-- i.Team_Education_Group are clean dummies
+- i.Education_Group are clean dummies
 - No team mixing issues
 
 ## Files Generated
